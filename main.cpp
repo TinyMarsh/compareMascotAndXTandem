@@ -28,7 +28,9 @@ int main(int argc, char* argv[]) {
 	std::pair<std::vector<std::vector<double> >,std::vector<std::vector<double> > > allFWHMs;
 	std::pair<std::vector<float>,std::vector<float> > allChiSquareds;
 	std::pair<std::vector<int>,std::vector<int> > allDegreesOfFreedoms;
-	getQuant(allQuants, allFWHMs, allChiSquareds, allDegreesOfFreedoms, rawFileName, newPeptideInfo);
+	std::pair<std::vector<float>,std::vector<float> > allIntensities;
+	std::pair<std::vector<float>,std::vector<float> > allBestPeakRts;
+	getQuant(allQuants, allFWHMs, allChiSquareds, allDegreesOfFreedoms, allIntensities, allBestPeakRts, rawFileName, newPeptideInfo);
 
 	//output quantitation info to "peakAreas.csv"
 	std::ofstream file("peakAreas.csv");
@@ -46,7 +48,7 @@ int main(int argc, char* argv[]) {
 	}
 	fileFWHM.close();
 
-	//output FWHMs to "ChiSquared.csv"
+	//output chi-squareds to "ChiSquared.csv"
 	std::ofstream fileChiSquared("ChiSquared.csv");
 	fileChiSquared << "Mascot" << "," << "X!Tandem" << "\n";
 	for(int peptide=0; peptide<numPeptides; ++peptide){
@@ -56,6 +58,24 @@ int main(int argc, char* argv[]) {
 							allDegreesOfFreedoms.second[peptide] << "\n";
 	}
 	fileChiSquared.close();
+
+	//output intensities to "intensities.csv"
+	std::ofstream fileIntensities("intensities.csv");
+	fileIntensities << "Mascot" << "," << "X!Tandem" << "\n";
+	for(int peptide=0; peptide<numPeptides; ++peptide){
+		fileIntensities <<	allIntensities.first[peptide] << "," <<
+							allIntensities.second[peptide] << "\n";
+	}
+	fileIntensities.close();
+
+	//output best peak retention times to "bestPeakRts.csv"
+	std::ofstream fileBestRts("bestPeakRts.csv");
+	fileBestRts << "Mascot" << "," << "X!Tandem" << "\n";
+	for(int peptide=0; peptide<numPeptides; ++peptide){
+		fileBestRts <<	allBestPeakRts.first[peptide] << "," <<
+						allBestPeakRts.second[peptide] << "\n";
+	}
+	fileBestRts.close();
 
 	return 0;
 }

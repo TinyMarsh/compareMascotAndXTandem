@@ -15,6 +15,7 @@ struct peakInfo{
     double intensity;
     double area;
     int index;
+    float rt;
     std::vector<double> FWHMs;
     float chiSquared;
     int degressOfFreedom;
@@ -24,6 +25,8 @@ void getQuant(	std::pair<std::vector<double>,std::vector<double> > &allQuants,
 				std::pair<std::vector<std::vector<double> >,std::vector<std::vector<double> > > &allFWHMs,
 				std::pair<std::vector<float>,std::vector<float> > &allChiSquareds,
 				std::pair<std::vector<int>,std::vector<int> > &allDegreesOfFreedoms,
+                std::pair<std::vector<float>,std::vector<float> > &allIntensities,
+                std::pair<std::vector<float>,std::vector<float> > &allBestPeakRts,
 				std::string &fullFileName,
 				peptideInfo &newPeptideInfo);
 

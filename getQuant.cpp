@@ -11,6 +11,8 @@ void getQuant(	std::pair<std::vector<double>,std::vector<double> > &allQuants,
 				std::pair<std::vector<std::vector<double> >, std::vector<std::vector<double> > > &allFWHMs,
 				std::pair<std::vector<float>,std::vector<float> > &allChiSquareds,
 				std::pair<std::vector<int>,std::vector<int> > &allDegreesOfFreedoms,
+				std::pair<std::vector<float>,std::vector<float> > &allIntensities,
+				std::pair<std::vector<float>,std::vector<float> > &allBestPeakRts,
 				std::string &fullFileName,
 				peptideInfo &newPeptideInfo){
 
@@ -36,6 +38,8 @@ void getQuant(	std::pair<std::vector<double>,std::vector<double> > &allQuants,
 		std::vector<std::vector<double> > FWHMs;
 		std::vector<float> chiSquareds;
 		std::vector<int> degressOfFreedoms;
+		std::vector<float> intensities;
+		std::vector<float> bestPeakRts;
 
 		for(int peptide=0; peptide<numPeptides; ++peptide){
 
@@ -125,6 +129,8 @@ void getQuant(	std::pair<std::vector<double>,std::vector<double> > &allQuants,
 			FWHMs.push_back(bestPeak.FWHMs);
 			chiSquareds.push_back(bestPeak.chiSquared);
 			degressOfFreedoms.push_back(bestPeak.degressOfFreedom);
+			intensities.push_back(bestPeak.intensity);
+			bestPeakRts.push_back(bestPeak.rt);
 		}
 
 		if(sample==0){
@@ -132,12 +138,16 @@ void getQuant(	std::pair<std::vector<double>,std::vector<double> > &allQuants,
 			allFWHMs.first = FWHMs;
 			allChiSquareds.first = chiSquareds;
 			allDegreesOfFreedoms.first = degressOfFreedoms;
+			allIntensities.first = intensities;
+			allBestPeakRts.first = bestPeakRts;
 
 		} else{
 			allQuants.second = peakAreas;
 			allFWHMs.second = FWHMs;
 			allChiSquareds.second = chiSquareds;
 			allDegreesOfFreedoms.second = degressOfFreedoms;
+			allIntensities.second = intensities;
+			allBestPeakRts.second = bestPeakRts;
 		}
 
 		pISL->Close();
@@ -332,7 +342,7 @@ void peakHeight(std::vector< std::vector<std::pair<double, double> > > &timeIntI
 			double peakArea = peakWidth*timeIntIsotopes[isotopeIndex][listOfPeaks[peakIndex]].second;
 
 			peakAreas.push_back(peakArea);
-			FWHMs.push_back((upperIndex-lowerIndex)*60);
+			FWHMs.push_back(timeIntIsotopes[isotopeIndex][upperIndex].first - timeIntIsotopes[isotopeIndex][lowerIndex].first);
 
 			// Let's get the FWHM in minutes for the first isotope 
 			if(isotopeIndex==0){
@@ -351,6 +361,7 @@ void peakHeight(std::vector< std::vector<std::pair<double, double> > > &timeIntI
 	}
 
 	double rtOfBestPeak = timeIntIsotopes[0][bestIndex].first;
+std::cout << rtOfBestPeak << "\n";
 	int degressOfFreedom=0;
 	float chiSquared = calculateGaussPearson(rtOfBestPeak, bestFWHMMins, bestIntensity, timeIntIsotopes, degressOfFreedom);
 
@@ -359,6 +370,7 @@ void peakHeight(std::vector< std::vector<std::pair<double, double> > > &timeIntI
 	bestPeak.intensity = bestIntensity;
 	bestPeak.area = bestArea;
 	bestPeak.index = bestIndex;
+	bestPeak.rt = rtOfBestPeak;
 	bestPeak.FWHMs = bestFWHM;
 }
 
@@ -405,6 +417,7 @@ float calculateGaussPearson(double rtOfBestPeak, double bestFWHMMins, double bes
 	double minimumRt = rtOfBestPeak - 2*sigma;
 	double maximumRt = rtOfBestPeak + 2*sigma;
 
+	degressOfFreedom=0;
 	float chiSquaredSum=0;
 	int numPoints = timeIntIsotopes[0].size();
 	for(int index=0; (index<numPoints); ++index){
@@ -417,4 +430,10 @@ float calculateGaussPearson(double rtOfBestPeak, double bestFWHMMins, double bes
 	}
 
 	return chiSquaredSum;
+}
+
+float calculateShapiroWilk(double rtOfBestPeak, double bestFWHMMins, double bestIntensity, std::vector< std::vector<std::pair<double, double> > > &timeIntIsotopes, int &degressOfFreedom){
+	// This function calculates the Shaprio-Wilk test statistic for goodness of fit. It returns a float which is a p-value
+
+	
 }
