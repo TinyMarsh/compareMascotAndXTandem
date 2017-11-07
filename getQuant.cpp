@@ -94,7 +94,7 @@ void getQuant(	std::pair<std::vector<double>,std::vector<double> > &allQuants,
 			mzRange = std::to_wstring(mzLower);
 			mzRange=mzRange+std::wstring(L"-");
 			mzRange+=std::to_wstring(mzUpper);
-			mzRange.append(1, 0); 
+			mzRange.append(1, 0);
 			getTimeIntPairs(timeIntPairs, filter, mzRange, rtLower, rtUpper, pISL);
 
 			timeIntIsotopes.push_back(timeIntPairs);
@@ -167,7 +167,7 @@ void openRawFile(std::wstring wRawFile, IXRawfile5* &pISL){
 	wchar_t* const iid_IXRawfile_str = (wchar_t *)L"{11B488A0-69B1-41FC-A660-FE8DF2A31F5B}";
 
 	CLSID clsid_MSFileReader;
-	CLSID clsid_IXRawfile;    
+	CLSID clsid_IXRawfile;
 
 	CLSIDFromString(clsid_MSFileReader_str, &clsid_MSFileReader);
 	CLSIDFromString(iid_IXRawfile_str, &clsid_IXRawfile);
@@ -184,7 +184,7 @@ void openRawFile(std::wstring wRawFile, IXRawfile5* &pISL){
 	hr=CoInitialize(NULL);
 
 	if(SUCCEEDED(hr)){
-		std::cout << "CoInitialize success" << std::endl;  
+		std::cout << "CoInitialize success" << std::endl;
 
 		hr = CoCreateInstance ( clsid_MSFileReader,		// CLSID of coclass
 								NULL,					// not used - aggregation
@@ -220,7 +220,7 @@ void openRawFile(std::wstring wRawFile, IXRawfile5* &pISL){
 				getError();
 				SetLastError(0);
 				dw = 0;
-			}          
+			}
 			// Couldn't create the COM object.  hr holds the error code.
 		}
 
@@ -233,7 +233,7 @@ void openRawFile(std::wstring wRawFile, IXRawfile5* &pISL){
 			getError();
 			SetLastError(0);
 			dw = 0;
-		}  
+		}
 	}
 }
 
@@ -292,23 +292,31 @@ void peakHeight(std::vector< std::vector<std::pair<double, double> > > &timeIntI
 	int numIndices = isotope1.size();
 
 	std::vector<int> listOfPeaks;
-	for(int slidingWindowIndex=6; slidingWindowIndex<numIndices-6; slidingWindowIndex++){	//
-		int higherThan = 0;																	//       
-		for(int index=slidingWindowIndex-6; index<slidingWindowIndex; index++){				//
-			if(isotope1[slidingWindowIndex].second > isotope1[index].second){				//
-				higherThan++;																//
-			}																				//  Create list of indices corresponding to found peaks.
-		}																					//
-		if(higherThan>2){																	//
-			higherThan=0;																	//
-			for(int index=slidingWindowIndex+1; index<=slidingWindowIndex+6; index++){		//  A peak is deemed found if the central intensity is greater
-				if(isotope1[slidingWindowIndex].second > isotope1[index].second){			//  than any of the 6 intensities below AND greater than any of the
-					higherThan++;															//  6 intensities above.
-				}																			//
-			}																				//
-			if(higherThan>2) listOfPeaks.push_back(slidingWindowIndex);						//
-		}																					//
-	}																						//
+
+	for(int slidingWindowIndex=6; slidingWindowIndex<numIndices-6; slidingWindowIndex++){
+		//First let's do a basic check that this point is at least at a local maximum about 3 points
+
+		if(!(	(isotope1[slidingWindowIndex].second>=isotope1[slidingWindowIndex-1].second) &&
+				(isotope1[slidingWindowIndex].second>=isotope1[slidingWindowIndex+1].second))){
+			continue;
+		}
+
+		int higherThan = 0;
+		for(int index=slidingWindowIndex-6; index<slidingWindowIndex; index++){
+			if(isotope1[slidingWindowIndex].second > isotope1[index].second){
+				higherThan++;
+			}
+		}
+		if(higherThan>2){
+			higherThan=0;
+			for(int index=slidingWindowIndex+1; index<=slidingWindowIndex+6; index++){
+				if(isotope1[slidingWindowIndex].second > isotope1[index].second){
+					higherThan++;
+				}
+			}
+			if(higherThan>2) listOfPeaks.push_back(slidingWindowIndex);
+		}
+	}
 
 	int numPeaks = listOfPeaks.size();
 	double bestArea = 0;
@@ -338,15 +346,16 @@ void peakHeight(std::vector< std::vector<std::pair<double, double> > > &timeIntI
 			}
 			int upperIndex = intensityIndex;
 
-			double peakWidth = (upperIndex-lowerIndex)*60;
-			double peakArea = peakWidth*timeIntIsotopes[isotopeIndex][listOfPeaks[peakIndex]].second;
+			double fwhm=0;
+
+			double peakArea = getPeakArea(upperIndex, lowerIndex, numIndices, peakIntensity, listOfPeaks[peakIndex], fwhm, timeIntIsotopes, isotopeIndex);
 
 			peakAreas.push_back(peakArea);
-			FWHMs.push_back(timeIntIsotopes[isotopeIndex][upperIndex].first - timeIntIsotopes[isotopeIndex][lowerIndex].first);
+			FWHMs.push_back(fwhm);
 
-			// Let's get the FWHM in minutes for the first isotope 
+			// Let's get the FWHM in minutes for the first isotope
 			if(isotopeIndex==0){
-				FWHMMins = timeIntIsotopes[0][upperIndex].first - timeIntIsotopes[0][lowerIndex].first;
+				FWHMMins = fwhm;
 			}
 		}
 
@@ -361,7 +370,6 @@ void peakHeight(std::vector< std::vector<std::pair<double, double> > > &timeIntI
 	}
 
 	double rtOfBestPeak = timeIntIsotopes[0][bestIndex].first;
-std::cout << rtOfBestPeak << "\n";
 	int degressOfFreedom=0;
 	float chiSquared = calculateGaussPearson(rtOfBestPeak, bestFWHMMins, bestIntensity, timeIntIsotopes, degressOfFreedom);
 
@@ -435,5 +443,30 @@ float calculateGaussPearson(double rtOfBestPeak, double bestFWHMMins, double bes
 float calculateShapiroWilk(double rtOfBestPeak, double bestFWHMMins, double bestIntensity, std::vector< std::vector<std::pair<double, double> > > &timeIntIsotopes, int &degressOfFreedom){
 	// This function calculates the Shaprio-Wilk test statistic for goodness of fit. It returns a float which is a p-value
 
-	
+
+}
+
+double getPeakArea(int upperIndex, int lowerIndex, int numIndices, double peakIntensity, int peakIndex, double &fwhm, std::vector< std::vector<std::pair<double, double> > > &timeIntIsotopes, int isotopeIndex){
+
+	double peakWidth=0, peakArea=0;
+	//If the half maximum can't be found to the left, then we will use the half maximum to the right and multiple by 2, and visa-versa
+	//If the half maximum can't be found to the left AND the right, then this suggests a peak width wider than our XIC window - we can treat this as a bad peak and report its areas as zero
+	if(lowerIndex==0){
+		if(upperIndex==numIndices-1){
+			return peakArea;
+		} else{
+			peakWidth = (upperIndex-peakIndex)*2*60;
+			fwhm = (timeIntIsotopes[isotopeIndex][upperIndex].first - timeIntIsotopes[isotopeIndex][peakIndex].first)*2;
+		}
+	} else if(upperIndex==numIndices-1){
+		peakWidth = (peakIndex-lowerIndex)*2*60;
+		fwhm = (timeIntIsotopes[isotopeIndex][peakIndex].first - timeIntIsotopes[isotopeIndex][lowerIndex].first)*2;
+	} else{
+		peakWidth = (upperIndex-lowerIndex)*60;
+		fwhm = timeIntIsotopes[isotopeIndex][upperIndex].first - timeIntIsotopes[isotopeIndex][lowerIndex].first;
+	}
+
+	peakArea = peakWidth*peakIntensity;
+
+	return peakArea;
 }

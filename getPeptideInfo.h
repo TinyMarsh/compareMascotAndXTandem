@@ -23,4 +23,6 @@ int getXTandem(std::vector<std::string> &xTandemSequences, std::vector<std::stri
 void getMascotRTs(std::vector<double> &mascotRTs, int mascotRawFileIndex);
 void getXTandemRTs(std::vector<double> &xTandemRTs, int xTandemRawFileIndex);
 
+int getNumPeptides(std::ifstream &file);
+
 #endif //PESCAL_GETPEPTIDEINFO_H

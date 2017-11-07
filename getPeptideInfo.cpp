@@ -4,7 +4,7 @@ peptideInfo getPeptideInfo(std::string &rawFileName){
 
 	//Create our struct which is going to store all our info
 	peptideInfo newPeptideInfo;
-	
+
 	//We will fetch all the sequence, modification position, and charge for each peptide and store them in vectors
 
 	//...said vectors...
@@ -33,7 +33,7 @@ peptideInfo getPeptideInfo(std::string &rawFileName){
 	getXTandemRTs(xTandemRTs, xTandemRawFileIndex);
 
 	//We'll store the peptide db IDs of peptides which are identical between each identification software in this handy vector of type pair
-	std::vector<std::pair<int, int> > dbIDs; 
+	std::vector<std::pair<int, int> > dbIDs;
 
 	//Now we will fill the above handy vector. For every mascot sequence, modpos, and charge, check if there exists an xTandem equivalent. If there is, store the db ID from Mascot and X!Tandem in an int pair
 	//While we're here we will fill our newPeptideInfo struct
@@ -68,7 +68,7 @@ peptideInfo getPeptideInfo(std::string &rawFileName){
 				break;
 			}
 		}
-	}	
+	}
 
 	newPeptideInfo.dbIDs = dbIDs;
 
@@ -77,7 +77,12 @@ peptideInfo getPeptideInfo(std::string &rawFileName){
 
 int getMascot(std::vector<std::string> &mascotSequences, std::vector<std::string> &mascotModPos, std::vector<std::string> &mascotCharges, std::vector<std::string> &mascotMz, std::string &rawFileName){
 
-	std::ifstream file("F:\\data\\CTAM\\analysis\\mascotPosOfMod\\combiPeptData.csv");
+	std::ifstream file("F:\\data\\CTAM\\analysis\\newCalcRT\\mascot\\combiPeptData.csv");
+
+	int numPeptides = getNumPeptides(file);
+	file.clear();
+	file.seekg(0, std::ios::beg);
+
 
 	std::string value;
 
@@ -96,7 +101,7 @@ int getMascot(std::vector<std::string> &mascotSequences, std::vector<std::string
 	//first getline just moves the cursor past the first row, since we don't want the headers
 	std::getline(file, value, '\n');
 
-	for(int peptide=0; peptide<45187; ++peptide){
+	for(int peptide=0; peptide<numPeptides; ++peptide){
 
 		//skip the first five quatation marks so that we get the sequence
 		for(int i=0; i<5; ++i){
@@ -139,8 +144,11 @@ int getMascot(std::vector<std::string> &mascotSequences, std::vector<std::string
 
 int getXTandem(std::vector<std::string> &xTandemSequences, std::vector<std::string> &xTandemModPos, std::vector<std::string> &xTandemCharges, std::vector<std::string> &xTandemMz, std::string &rawFileName){
 
+	std::ifstream file("F:\\data\\CTAM\\analysis\\newCalcRT\\xtandem\\combiPeptData.csv");
 
-	std::ifstream file("F:\\data\\CTAM\\analysis\\peptideShakerPosOfMod\\combiPeptData.csv");
+	int numPeptides = getNumPeptides(file);
+	file.clear();
+	file.seekg(0, std::ios::beg);
 
 	std::string value;
 
@@ -159,7 +167,7 @@ int getXTandem(std::vector<std::string> &xTandemSequences, std::vector<std::stri
 	//first getline just moves the cursor past the first row, since we don't want the headers
 	std::getline(file, value, '\n');
 
-	for(int peptide=0; peptide<59410; ++peptide){
+	for(int peptide=0; peptide<numPeptides; ++peptide){
 
 		//skip the first five quatation marks so that we get the sequence
 		for(int i=0; i<5; ++i){
@@ -210,14 +218,18 @@ int getXTandem(std::vector<std::string> &xTandemSequences, std::vector<std::stri
 }
 
 void getMascotRTs(std::vector<double> &mascotRTs, int mascotRawFileIndex){
-	std::ifstream file("F:\\data\\CTAM\\analysis\\mascotPosOfMod\\calculatedRTs.csv");
+	std::ifstream file("F:\\data\\CTAM\\analysis\\newCalcRt\\mascot\\calculatedRTs.csv");
+
+	int numPeptides = getNumPeptides(file);
+	file.clear();
+	file.seekg(0, std::ios::beg);
 
 	std::string value;
 
 	//not interested in first line
 	std::getline(file, value, '\n');
 
-	for(int i=0; i<45187; ++i){
+	for(int i=0; i<numPeptides; ++i){
 		for(int j=0; j<mascotRawFileIndex; ++j){
 			std::getline(file, value, '\"');
 			std::getline(file, value, '\"');
@@ -234,14 +246,18 @@ void getMascotRTs(std::vector<double> &mascotRTs, int mascotRawFileIndex){
 }
 
 void getXTandemRTs(std::vector<double> &xTandemRTs, int xTandemRawFileIndex){
-	std::ifstream file("F:\\data\\CTAM\\analysis\\peptideShakerPosOfMod\\calculatedRTs.csv");
+	std::ifstream file("F:\\data\\CTAM\\analysis\\newCalcRT\\xtandem\\calculatedRTs.csv");
+
+	int numPeptides = getNumPeptides(file);
+	file.clear();
+	file.seekg(0, std::ios::beg);
 
 	std::string value;
 
 	//not interested in first line
 	std::getline(file, value, '\n');
 
-	for(int i=0; i<59410; ++i){
+	for(int i=0; i<numPeptides; ++i){
 		for(int j=0; j<xTandemRawFileIndex; ++j){
 			std::getline(file, value, '\"');
 			std::getline(file, value, '\"');
@@ -255,4 +271,14 @@ void getXTandemRTs(std::vector<double> &xTandemRTs, int xTandemRawFileIndex){
 
 		std::getline(file, value, '\n');
 	}
+}
+
+int getNumPeptides(std::ifstream &file){
+
+	std::string line;
+	int numPeptides=0;
+	while (std::getline(file, line))
+		++numPeptides;
+
+	return numPeptides-1;
 }

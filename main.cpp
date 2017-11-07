@@ -6,7 +6,7 @@
 #include <iostream>
 
 /*
-This program gets the XICs for the three isotopes of each peptide and outputs the quant information to a file, peakAreas.csv. It does this for 
+This program gets the XICs for the three isotopes of each peptide and outputs the quant information to a file, peakAreas.csv. It does this for
 */
 
 int main(int argc, char* argv[]) {

@@ -42,4 +42,6 @@ void getError();
 
 float calculateGaussPearson(double rtOfBestPeak, double bestFWHM, double bestIntensity, std::vector< std::vector<std::pair<double, double> > > &timeIntIsotopes, int &degressOfFreedom);
 
+double getPeakArea(int upperIndex, int lowerIndex, int numIndices, double peakIntensity, int peakIndex, double &fwhm, std::vector< std::vector<std::pair<double, double> > > &timeIntIsotopes, int isotopeIndex);
+
 #endif //PESCAL_QUANTITATION_H
